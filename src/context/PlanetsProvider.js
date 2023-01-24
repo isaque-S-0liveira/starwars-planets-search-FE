@@ -6,19 +6,17 @@ import useFetch from '../hooks/useFetch';
 export default function PlanetsProvider({ children }) {
   const [planets, setPlanetsApi] = useState([]);
   const [planetsFiltered, setFilter] = useState(planets);
-  console.log(planetsFiltered);
   const { makeFetch } = useFetch();
 
   useEffect(() => {
     const fetchPlanets = async () => {
       const infoPlanets = await makeFetch();
       const { results } = infoPlanets;
-      setFilter(planets);
-      return setPlanetsApi(results);
+      setPlanetsApi(results);
+      setFilter(results);
     };
     fetchPlanets();
   }, []);
-
   const handleChange = (value) => {
     const filterPlanets = planets.filter((p) => p.name.includes(value));
     setFilter(filterPlanets);
