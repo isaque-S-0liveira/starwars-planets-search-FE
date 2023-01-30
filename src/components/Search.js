@@ -9,24 +9,27 @@ function Search() {
     handleChangeColum,
     handleChangeComparasion,
     handleChangeNumber,
+    options,
+    search,
+    filterMoment,
   } = useContext(PlanetsContext);
-
+  const filteredOp = (op) => !filterMoment.find((f) => f.column === op);
   return (
     <form>
       <input
         type="text"
         data-testid="name-filter"
+        value={ search }
         onChange={ ({ target: { value } }) => handleChange(value) }
       />
       <select
         data-testid="column-filter"
+        value={ filterMoment.column }
         onChange={ ({ target: { value } }) => handleChangeColum(value) }
       >
-        <option value="population">population</option>
-        <option value="orbital_period">orbital_period</option>
-        <option value="diameter">diameter</option>
-        <option value="rotation_period">rotation_period</option>
-        <option value="surface_water">surface_water</option>
+        {options.filter(filteredOp).map((op, i) => (
+          <option key={ i } value={ op }>{op}</option>
+        ))}
       </select>
       <select
         data-testid="comparison-filter"
