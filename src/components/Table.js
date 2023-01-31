@@ -2,15 +2,15 @@ import React, { useContext } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 
 function Table() {
-  const { planetsFiltered, filterMoment } = useContext(PlanetsContext);
+  const { planetsFiltered, filterMoment, removeFilter } = useContext(PlanetsContext);
   return (
     <>
       <ul>
         {filterMoment.map((f, i) => (
-          <li key={ i }>
+          <li key={ i } data-testid="filter">
             {`${f.column} ${f.comparison} ${f.number}`}
             {' '}
-            <button>x</button>
+            <button value={ f.column } onClick={ removeFilter }>x</button>
           </li>
         ))}
       </ul>

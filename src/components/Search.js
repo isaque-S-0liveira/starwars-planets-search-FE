@@ -12,6 +12,7 @@ function Search() {
     options,
     search,
     filterMoment,
+    removeAll,
   } = useContext(PlanetsContext);
   const filteredOp = (op) => !filterMoment.find((f) => f.column === op);
   return (
@@ -52,6 +53,13 @@ function Search() {
       >
         Filtrar
 
+      </button>
+      <button
+        type="button"
+        data-testid="button-remove-filters"
+        onClick={ removeAll }
+      >
+        Remove All
       </button>
     </form>
   );

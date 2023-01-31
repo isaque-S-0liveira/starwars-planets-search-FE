@@ -17,7 +17,8 @@ export default function PlanetsProvider({ children }) {
   const [column, setColumn] = useState('population');
   const [comparison, setComparison] = useState('maior que');
   const [number, setNumber] = useState(0);
-  const [options, setOptions] = useState(optionsArr);
+  const [options] = useState(optionsArr);
+  const [remover, setRemove] = useState(false);
   const { makeFetch } = useFetch();
 
   useEffect(() => {
@@ -46,52 +47,72 @@ export default function PlanetsProvider({ children }) {
     setNumber(value);
   };
 
-  // const filterTest = { column, comparison, number };
-  // setFilterMoment((filterPrev) => [...filterPrev, filterTest]);
-  // filterMoment.map((inf) => {
-  //   console.log(inf);
-  //   if (inf.comparison === 'maior que') {
-  //     const filter = planets.filter((p) => Number(p[column]) > Number(number));
-  //     setFilter(filter);
-  //   } if (inf.comparison === 'menor que') {
-  //     const filter = planets.filter((p) => Number(p[column]) < Number(number));
-  //     setFilter(filter);
-  //   } if (inf.comparison === 'igual a') {
-  //     const filter = planets.filter((p) => Number(p[column]) === Number(number));
-  //     setFilter(filter);
-  //   }
-  //   return planets;
-  // });
-  const test = () => {
-  //   const test1 = testFilterd();
-  //   const opt = test1.forEach((el) => options.filter((op) => !op.includes(el)));
-  // //  console.log(opt);
-  //   console.log(test1);
-  //   console.log(options);
-  //   // const optionsF = filterMoment.filter(testFilterd).map((op) => op);
-  //   // setOptions(optionsF);
-    const filteredOp = options.filter((op) => !filterMoment.find((f) => f.column === op));
-    setOptions(filteredOp.length === 1 ? [] : filteredOp);
-    console.log(filteredOp);
+  const removeAll = () => {
+    setFilterMoment([]);
+    setFilter(planets);
   };
 
+  const removeFilter = ({ target }) => {
+    setRemove(true);
+    const { value } = target;
+    const remove = filterMoment.filter((cl) => cl.column !== value);
+    setFilterMoment(remove);
+    const filteredOp = options.filter((op) => !filterMoment.find((f) => f.column === op));
+    setColumn(filteredOp[1]);
+  };
+
+  useEffect(() => {
+    if (filterMoment.length === 0) {
+      setFilter(planets);
+    } else if (remover) {
+      filterMoment.forEach((f) => {
+        switch (f.comparison) {
+        case 'maior que':
+          setFilter(
+            planets.filter((planet) => Number(planet[f.column]) > Number(f.number)),
+          );
+          break;
+        case 'menor que':
+          setFilter(
+            planets.filter((planet) => Number(planet[f.column]) < Number(f.number)),
+          );
+          break;
+        case 'igual a':
+          setFilter(
+            planets.filter((planet) => Number(planet[f.column]) === Number(f.number)),
+          );
+          break;
+        default:
+          setFilter(planets);
+          break;
+        }
+      });
+    }
+  }, [filterMoment]);
+
+  console.log(filterMoment);
   const handleClick = () => {
     const filterTest = { column, comparison, number };
     setFilterMoment((filterPrev) => [...filterPrev, filterTest]);
+    console.log();
     if (comparison === 'maior que') {
+      setColumn(column);
       setFilter(filterMoment.length === 0
         ? planets.filter((d) => Number(d[column]) > Number(number))
         : planetsFiltered.filter((d) => Number(d[column]) > Number(number)));
     } else if (comparison === 'menor que') {
+      setColumn(column);
       setFilter(filterMoment.length === 0
         ? planets.filter((d) => Number(d[column]) < Number(number))
         : planetsFiltered.filter((d) => Number(d[column]) < Number(number)));
     } else if (comparison === 'igual a') {
+      setColumn(column);
       setFilter(filterMoment.length === 0
         ? planets.filter((d) => Number(d[column]) === Number(number))
         : planetsFiltered.filter((d) => Number(d[column]) === Number(number)));
     }
-    test();
+    const filteredOp = options.filter((op) => !filterMoment.find((f) => f.column === op));
+    setColumn(filteredOp[1]);
   };
 
   const values = {
@@ -104,7 +125,11 @@ export default function PlanetsProvider({ children }) {
     handleChangeColum,
     handleChangeComparasion,
     handleChangeNumber,
+    removeFilter,
+    removeAll,
+    setColumn,
     options,
+    optionsArr,
   };
 
   return (
