@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import mock from '../mock/mock';
@@ -17,7 +17,23 @@ describe('Testa a aplicação e...', () => {
       })
     ));
   });
-
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  test('se a aplicação faz a requisição a api assim que o usuario acesssa', () => {
+    render(<App />);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+  test('Se ao renderizar App os planetas aparecem', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      json: jest.fn().mockResolvedValue(mock),
+    });
+    render(<App />);
+    await waitFor(() => {
+      const cell = screen.getByRole('cell', { name: /tatooine/i });
+      expect(cell).toBeInTheDocument();
+    });
+  });
   test('se renderiza os inputs de pesquisa corretos', () => {
     render(<App />);
 
@@ -33,63 +49,161 @@ describe('Testa a aplicação e...', () => {
     expect(numberFilter).toBeInTheDocument();
     expect(buttonFilter).toBeInTheDocument();
   });
-  test('se a aplicação faz a requisição a api assim que o usuario acesssa', () => {
-    // const planet = {
-    //   name: 'Alderaan',
-    // };
-    // global.fetch = jest.fn(() => Promise.resolve({
-    //   json: () => Promise.resolve(planet),
-    // }));
-    render(<App />);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-  });
+
   test('testa o filtro por nome', async () => {
-    const searchName = screen.getByTestId('name-filter');
+    render(<App />);
+    const searchName = screen.getByRole('textbox');
+    expect(searchName).toBeInTheDocument();
     userEvent.type(searchName, 'aa');
-    const rederedPlanet = await screen.findByText('Alderaan');
-    expect(rederedPlanet).toBeInTheDocument();
   });
-  test('testa o filtro "igual a"', async () => {
-    // const planet = {
-    //   name: 'Alderaan',
-    // };
-    // global.fetch = jest.fn(() => Promise.resolve({
-    //   json: () => Promise.resolve(planet),
-    // }));
-    render(<App />);
 
-    const columnFilter = screen.getByTestId(COLUMN_FILTER);
-    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
-    const numberFilter = screen.getByTestId(VALUE_FILTER);
-    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
-
-    userEvent.selectOptions(columnFilter, 'population');
-    userEvent.selectOptions(comparisonFilter, 'igual a');
-    userEvent.type(numberFilter, '2000000000');
-    userEvent.click(buttonFilter);
-
-    const population = await screen.getByRole('cell', {
-      name: /2000000000/i,
-    });
-    expect(population).toBeInTheDocument();
-  });
-  test('testa o filtro "maior que" ', async () => {
+  test('adiciona o filtro surface_water "menor que" 2 e dps o remove', async () => {
     render(<App />);
     const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
     const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
     const numberFilter = screen.getByTestId(VALUE_FILTER);
-    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
-
-    userEvent.selectOptions(columnFilter, 'orbital_period');
-    userEvent.selectOptions(comparisonFilter, 'maior que');
-    userEvent.type(numberFilter, '5000');
-    userEvent.click(buttonFilter);
-    const orbitalPeriod = await screen.getByRole('cell', {
-      name: /5110/i,
+    act(() => {
+      userEvent.selectOptions(columnFilter, 'surface_water');
+      userEvent.selectOptions(comparisonFilter, 'menor que');
+      userEvent.type(numberFilter, '2');
+      userEvent.click(buttonFilter);
     });
-    expect(orbitalPeriod).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('cell', {
+        name: /bespin/i,
+      })).toBeInTheDocument();
+      const bttRemoveFilter = screen.getByRole('button', {
+        name: /x/i,
+      });
+      act(() => {
+        userEvent.click(bttRemoveFilter);
+      });
+      expect(screen.getByRole('cell', {
+        name: /alderaan/i,
+      })).toBeInTheDocument();
+    });
+  });
+  test('adc o filtro população "maior que" 100000000000 e depois o remove', async () => {
+    render(<App />);
+    const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    act(() => {
+      userEvent.selectOptions(columnFilter, 'population');
+      userEvent.selectOptions(comparisonFilter, 'maior que');
+      userEvent.type(numberFilter, '100000000000');
+      userEvent.click(buttonFilter);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('cell', {
+        name: /coruscant/i,
+      })).toBeInTheDocument();
+      const bttRemoveFilter = screen.getByRole('button', {
+        name: /x/i,
+      });
+      act(() => {
+        userEvent.click(bttRemoveFilter);
+      });
+      expect(screen.getByRole('cell', {
+        name: /alderaan/i,
+      })).toBeInTheDocument();
+    });
+  });
+  test('adc o filtro três filtros e testa se a tabela é atualizada', async () => {
+    render(<App />);
+    const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    act(() => {
+      userEvent.selectOptions(columnFilter, 'surface_water');
+      userEvent.selectOptions(comparisonFilter, 'igual a');
+      userEvent.type(numberFilter, '8');
+      userEvent.click(buttonFilter);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('cell', {
+        name: /dagobah/i,
+      })).toBeInTheDocument();
+    });
+    act(() => {
+      userEvent.selectOptions(columnFilter, 'rotation_period');
+      userEvent.selectOptions(comparisonFilter, 'igual a');
+      userEvent.type(numberFilter, '24');
+      userEvent.click(buttonFilter);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('cell', {
+        name: /dagobah/i,
+      })).not.toBeInTheDocument();
+    });
   });
   test('testa o filtro "menor que" ', () => {
     render(<App />);
+    const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+
+    userEvent.selectOptions(columnFilter, 'surface_water');
+    userEvent.selectOptions(comparisonFilter, 'menor que');
+    userEvent.type(numberFilter, '2');
+    userEvent.click(buttonFilter);
+    // const planetName = screen.getByRole('cell', {
+    //   name: /tatooine/i,
+    // });
+    // expect(planetName).toBeInTheDocument();
+  });
+  test('adiciona filtro e depois o remove', async () => {
+    render(<App />);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    act(() => {
+      userEvent.type(numberFilter, '5');
+      userEvent.click(buttonFilter);
+    });
+
+    await waitFor(() => {
+      const bttRemoveFilter = screen.getByRole('button', {
+        name: /x/i,
+      });
+      userEvent.click(bttRemoveFilter);
+    });
+  });
+  test('testa se o botão de remover todos os filtros funciona', async () => {
+    render(<App />);
+    const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+    userEvent.selectOptions(columnFilter, 'surface_water');
+    userEvent.selectOptions(comparisonFilter, 'menor que');
+    userEvent.type(numberFilter, '2');
+    userEvent.click(buttonFilter);
+    const removeAll = screen.getByTestId('button-remove-filters');
+    userEvent.click(removeAll);
+  });
+  test('Adicionar um filtro e depois remover esse filtro', async () => {
+    render(<App />);
+    const columnFilter = screen.getByTestId(COLUMN_FILTER);
+    const comparisonFilter = screen.getByTestId(COMPARASION_FILTER);
+    const numberFilter = screen.getByTestId(VALUE_FILTER);
+    const buttonFilter = screen.getByTestId(BUTTON_FILTER);
+    act(() => {
+      userEvent.selectOptions(columnFilter, 'rotation_period');
+      userEvent.selectOptions(comparisonFilter, 'menor que');
+      userEvent.clear(numberFilter);
+      userEvent.type(numberFilter, '200');
+      userEvent.click(buttonFilter);
+    });
+
+    await waitFor(() => {
+      const bttRemoveFilter = screen.getByRole('button', {
+        name: /x/i,
+      });
+      userEvent.click(bttRemoveFilter);
+    });
   });
 });

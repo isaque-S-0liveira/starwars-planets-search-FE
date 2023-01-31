@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 import PlanetsContext from './PlanetsContext';
 import useFetch from '../hooks/useFetch';
@@ -29,6 +28,7 @@ export default function PlanetsProvider({ children }) {
       setFilter(results);
     };
     fetchPlanets();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handleChange = (value) => {
     const filterPlanets = planets.filter((p) => p.name.includes(value));
@@ -88,9 +88,9 @@ export default function PlanetsProvider({ children }) {
         }
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterMoment]);
 
-  console.log(filterMoment);
   const handleClick = () => {
     const filterTest = { column, comparison, number };
     setFilterMoment((filterPrev) => [...filterPrev, filterTest]);
